@@ -6,3 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+uuid = "0.8.2"
+async-channel = "1.6.1"
+tokio = { version = "1.17.0", features = ["full"] }
