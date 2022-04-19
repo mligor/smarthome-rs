@@ -1,59 +1,96 @@
-use crate::event::Event;
-use async_channel::{Receiver, Sender};
+use crate::event::Sender;
+use crate::event::{channel, Event};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use tokio::task;
 
-use crate::device::{run_device, Device};
+use crate::device::Device;
 
-type DeviceList = Arc<Mutex<HashMap<String, Device>>>;
+//type DeviceList = Arc<Mutex<HashMap<String, Device>>>;
+type DeviceList = HashMap<String, Device>;
+
+pub struct DeviceManagerData {
+    tx: Sender,
+    //    rx: Receiver,
+    devices: DeviceList,
+    started: bool,
+}
 
 pub struct DeviceManager {
-    sender: Sender<Event>,
-    receiver: Receiver<Event>,
-    devices: DeviceList,
+    value: Arc<Mutex<DeviceManagerData>>,
 }
 
 impl DeviceManager {
-    pub fn new(sender: &Sender<Event>, receiver: &Receiver<Event>) -> DeviceManager {
-        DeviceManager {
-            sender: sender.clone(),
-            receiver: receiver.clone(),
-            devices: Arc::new(Mutex::new(HashMap::new())),
+    pub fn new() -> DeviceManager {
+        let (tx, rx) = channel();
+        Self {
+            value: Arc::new(Mutex::new(DeviceManagerData {
+                tx,
+                //rx,
+                devices: HashMap::new(),
+                started: false,
+            })),
         }
     }
 
-    pub(crate) fn add(&mut self, device: Device) {
-        let device_name;
+    pub async fn add(&mut self, device: Device) {
+        let dev_copy = device.clone();
+        let mut mngr = self.value.lock().unwrap();
+        mngr.devices.insert(device.name(), device);
+        if mngr.started {
+            let tx = mngr.tx.clone();
+            dev_copy.clone().start(tx.clone());
+        };
+    }
+
+    pub async fn start(&mut self) {
+        let tx: Sender;
+        // Start all devices first
         {
-            let device_data = device.lock().unwrap();
-            device_name = device_data.name.clone();
+            //println!("Starting devices");
+            let mut mngr = self.value.lock().unwrap();
+            mngr.started = true;
+            tx = mngr.tx.clone();
+            for device in mngr.devices.values() {
+                device.clone().start(tx.clone());
+            }
         }
 
-        let mut devices = self.devices.lock().unwrap();
-        devices.insert(device_name.clone(), device);
-    }
+        //println!("Starting manager message loop");
 
-    fn run_all_devices(devices: DeviceList) {
-        let devices = devices.lock().unwrap();
-        for device in devices.values() {
-            run_device(device);
-        }
-    }
+        let mut rx = tx.subscribe();
+        // tokio::spawn(async move {
+        //     let init_event = Event::new("init".to_string(), None);
+        //     _ = tx.send(init_event);
+        // });
 
-    pub async fn run(&self) {
-        // run all devices
-        DeviceManager::run_all_devices(self.devices.clone());
-        task::spawn(async move { self.event_loop() });
-    }
-
-    async fn event_loop(&self) {
         loop {
-            if let Ok(event) = self.receiver.recv().await {
-                println!("Event {} happend.", event.name);
-            } else {
-                println!("Error");
+            match rx.recv().await {
+                Ok(ev) => {
+                    let mngr = self.clone();
+                    tokio::spawn(async move {
+                        mngr.handle_event(ev);
+                    });
+                }
+                Err(err) => println!("error receiving event in manager: {}", err),
             }
         }
     }
+
+    fn handle_event(&self, ev: Event) {
+        if let None = ev.source {
+            return; // Ignore own events
+        }
+        println!("{}: {}", "manager", ev.name);
+    }
+
+    pub fn clone(&self) -> Self {
+        Self {
+            value: self.value.clone(),
+        }
+    }
+
+    // pub fn get_sender(&self) -> Sender {
+    //     let mngr = self.value.lock().unwrap();
+    //     mngr.tx.clone()
+    // }
 }
