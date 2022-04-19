@@ -1,7 +1,5 @@
-use bytes::Bytes;
-use tokio::sync::broadcast;
-
 use crate::device::Device;
+use tokio::sync::broadcast;
 
 pub type Sender = broadcast::Sender<Event>;
 pub type Receiver = broadcast::Receiver<Event>;
@@ -24,7 +22,7 @@ impl Event {
     }
 }
 
-pub enum Command {
-    Get { key: String },
-    Set { key: String, val: Bytes },
-}
+// pub enum Command {
+//     Get { key: String },
+//     Set { key: String, val: Bytes },
+// }

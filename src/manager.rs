@@ -5,12 +5,10 @@ use std::sync::{Arc, Mutex};
 
 use crate::device::Device;
 
-//type DeviceList = Arc<Mutex<HashMap<String, Device>>>;
 type DeviceList = HashMap<String, Device>;
 
 pub struct DeviceManagerData {
     tx: Sender,
-    //    rx: Receiver,
     devices: DeviceList,
     started: bool,
 }
@@ -32,7 +30,7 @@ impl DeviceManager {
         }
     }
 
-    pub async fn add(&mut self, device: Device) {
+    pub fn add(&mut self, device: Device) {
         let dev_copy = device.clone();
         let mut mngr = self.value.lock().unwrap();
         mngr.devices.insert(device.name(), device);
@@ -82,15 +80,12 @@ impl DeviceManager {
         }
         println!("{}: {}", "manager", ev.name);
     }
+}
 
-    pub fn clone(&self) -> Self {
+impl Clone for DeviceManager {
+    fn clone(&self) -> Self {
         Self {
             value: self.value.clone(),
         }
     }
-
-    // pub fn get_sender(&self) -> Sender {
-    //     let mngr = self.value.lock().unwrap();
-    //     mngr.tx.clone()
-    // }
 }
