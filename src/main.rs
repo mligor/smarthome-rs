@@ -1,45 +1,35 @@
-use crate::device::Device;
-use manager::DeviceManager;
 use std::time::Duration;
+
+use device::Device;
 use tokio::time::sleep;
 
-extern crate tokio;
-extern crate uuid;
-
 mod device;
+mod dummy;
 mod event;
 mod manager;
+mod time;
+mod types;
 
 #[tokio::main]
 async fn main() {
     {
-        let mut manager = DeviceManager::new();
+        let mut manager = manager::DeviceManager::new();
+
         {
-            let dev01 = Device::new("device1".to_string());
-            let dev02 = Device::new("device2".to_string());
-            let dev03 = Device::new("dev3".to_string());
+            //let dev01 = Device::new("device1".to_string());
+            let time_dev = Device::new(Box::new(time::TimeDevice::new()));
 
             // Add devices
-            manager.add(dev01);
-            manager.add(dev02);
-            manager.add(dev03);
+            //manager.add("dev1", dev01);
+            manager.add("time".to_string(), time_dev);
         }
 
         {
             let mut mngr = manager.clone();
             tokio::spawn(async move {
-                let d = Device::new("light01".to_string());
+                let d = Device::new(Box::new(dummy::DummyDevice::new("light01".to_string())));
                 sleep(Duration::from_millis(1000)).await;
-                mngr.add(d);
-            });
-        }
-
-        {
-            let mut mngr = manager.clone();
-            tokio::spawn(async move {
-                let d = Device::new("light02".to_string());
-                sleep(Duration::from_millis(2000)).await;
-                mngr.add(d);
+                mngr.add("light1".to_string(), d.clone());
             });
         }
 
