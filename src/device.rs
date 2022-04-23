@@ -1,19 +1,14 @@
+use crate::event::{Event, Sender};
 use std::sync::{Arc, Mutex};
-use termion::{color, style};
-use uuid::Uuid;
 
-use crate::{
-    event::{Event, Sender},
-    types::RHomeObject,
-};
-
-pub trait DeviceInterface: RHomeObject + Send {
-    fn get_name(&self) -> String;
+pub trait DeviceInterface: Send {
+    fn name(&self) -> String;
     fn set_name(&mut self, name: String);
     fn start(&mut self, _tx: Sender) -> bool {
         return true;
     }
     fn stop(&mut self) {}
+    fn on_event(&mut self, _ev: Event, _tx: &Sender) {}
 }
 
 type DeviceValue = Arc<Mutex<Box<dyn DeviceInterface>>>;
@@ -31,16 +26,12 @@ impl Device {
     }
 
     pub fn start(&mut self, tx: Sender) {
-        let ev = Event::new(
-            format!("{} started", self.get_name()),
-            self.id(),
-            self.get_name(),
-        );
+        let ev = Event::new("start".to_string(), self.name());
 
         let mut rx = tx.subscribe();
-        //println!("Starting device {} message loop", self.name());
+        println!("Starting device {} message loop", self.name());
         _ = tx.send(ev);
-        let dev = self.clone();
+        let mut dev = self.clone();
         let tx2 = tx.clone();
 
         tokio::spawn(async move {
@@ -54,35 +45,18 @@ impl Device {
         self.value.lock().unwrap().start(tx2);
     }
 
-    fn handle_event(&self, ev: Event, _tx: &Sender) {
-        if self.id() == ev.source {
+    fn handle_event(&mut self, ev: Event, tx: &Sender) {
+        if self.name() == ev.source {
             return; // ignore own events
         }
-        let name = self.value.lock().unwrap().get_name();
-
-        println!(
-            "{}{}{}{} : {}{}",
-            color::Fg(color::Cyan),
-            style::Bold,
-            name,
-            style::Reset,
-            ev.name,
-            style::Reset
-        );
+        self.value.lock().unwrap().on_event(ev, tx);
     }
 
     pub(crate) fn set_name(&mut self, name: String) {
         self.value.lock().unwrap().set_name(name);
     }
 
-    pub(crate) fn get_name(&self) -> String {
-        self.value.lock().unwrap().get_name()
-    }
-}
-
-impl RHomeObject for Device {
-    fn id(&self) -> Uuid {
-        let d = self.value.lock().unwrap();
-        d.as_ref().id()
+    pub(crate) fn name(&self) -> String {
+        self.value.lock().unwrap().name()
     }
 }

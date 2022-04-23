@@ -1,11 +1,15 @@
+use derive_more::Display;
+use std::collections::HashMap;
 use tokio::sync::broadcast;
-use uuid::Uuid;
 
-#[derive(Clone)]
+pub type EventData = HashMap<String, String>;
+
+#[derive(Clone, Display)]
+#[display(fmt = "src={}, event={}, data={:?}", source, name, data)]
 pub struct Event {
     pub name: String,
-    pub source: Uuid,
-    pub source_name: String,
+    pub data: EventData,
+    pub source: String,
 }
 
 pub type Sender = broadcast::Sender<Event>;
@@ -16,11 +20,11 @@ pub fn channel() -> (Sender, Receiver) {
 }
 
 impl Event {
-    pub(crate) fn new(name: String, source: Uuid, source_name: String) -> Event {
+    pub(crate) fn new(name: String, source: String) -> Event {
         Event {
             name,
+            data: EventData::new(),
             source,
-            source_name,
         }
     }
 }

@@ -4,7 +4,6 @@ use crate::{
     event::{channel, Event, Sender},
     result::{Error, Result},
     time::TimeDevice,
-    types::RHomeObject,
 };
 use std::{
     collections::HashMap,
@@ -12,13 +11,10 @@ use std::{
     sync::{Arc, Mutex},
 };
 use termion::{color, style};
-use uuid::Uuid;
 use yaml_rust::YamlLoader;
 
 pub struct DeviceManagerData {
-    id: Uuid,
     tx: Sender,
-    started: bool,
 }
 
 type DeviceManagerValue = Arc<Mutex<DeviceManagerData>>;
@@ -33,16 +29,13 @@ impl DeviceManager {
     pub(crate) fn new() -> DeviceManager {
         let (tx, _) = channel();
         DeviceManager {
-            value: Arc::new(Mutex::new(DeviceManagerData {
-                id: Uuid::new_v4(),
-                tx,
-                started: false,
-            })),
+            value: Arc::new(Mutex::new(DeviceManagerData { tx })),
             devices: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
     pub fn add(&mut self, name: String, device: Device) {
+        let n = name.clone();
         let dev_copy = device.clone();
         {
             let mut device = device.clone();
@@ -53,34 +46,27 @@ impl DeviceManager {
             let mut devices = self.devices.lock().unwrap();
             devices.insert(name, device);
         }
-        if mngr.started {
+        // if mngr.started
+        {
             let tx = mngr.tx.clone();
-            dev_copy.clone().start(tx.clone());
+            let tx2 = tx.clone();
+            dev_copy.clone().start(tx);
+
+            let ev = Event::new("start".to_string(), n);
+            //let tx_for_thread = tx.clone();
+            _ = tx2.send(ev);
         };
     }
 
     pub(crate) async fn start(&mut self) {
         let tx: Sender;
-        // Start all devices first
         {
-            println!("Starting devices");
-            let mut mngr = self.value.lock().unwrap();
-            mngr.started = true;
+            let mngr = self.value.lock().unwrap();
             tx = mngr.tx.clone();
-            let devices = self.devices.lock().unwrap();
-            for device in devices.values() {
-                device.clone().start(tx.clone());
-            }
         }
 
         println!("Starting manager message loop");
-
         let mut rx = tx.subscribe();
-        let id = self.id();
-        tokio::spawn(async move {
-            let init_event = Event::new("init".to_string(), id, "manager".to_string());
-            _ = tx.send(init_event);
-        });
 
         loop {
             match rx.recv().await {
@@ -133,7 +119,7 @@ impl DeviceManager {
     }
 
     fn handle_event(&self, ev: Event) {
-        if self.id() == ev.source {
+        if "manager" == ev.source {
             return; // Ignore own events
         }
 
@@ -143,7 +129,7 @@ impl DeviceManager {
             style::Bold,
             "manager",
             style::Reset,
-            ev.name,
+            ev,
             style::Reset
         );
     }
@@ -154,11 +140,5 @@ fn create_device_with_type(device_type: &str) -> Result<Device> {
         "time" => Ok(Device::new(Box::new(TimeDevice::new()))),
         "dummy" => Ok(Device::new(Box::new(DummyDevice::new()))),
         _ => Err(Error::new(format!("unknown device type '{}'", device_type))),
-    }
-}
-
-impl RHomeObject for DeviceManager {
-    fn id(&self) -> Uuid {
-        self.value.lock().unwrap().id
     }
 }

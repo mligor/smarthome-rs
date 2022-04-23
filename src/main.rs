@@ -4,7 +4,6 @@ mod event;
 mod manager;
 mod result;
 mod time;
-mod types;
 
 #[tokio::main]
 async fn main() {
