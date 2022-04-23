@@ -1,8 +1,3 @@
-use std::time::Duration;
-
-use device::Device;
-use tokio::time::sleep;
-
 mod device;
 mod dummy;
 mod event;

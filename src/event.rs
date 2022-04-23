@@ -1,8 +1,6 @@
 use tokio::sync::broadcast;
 use uuid::Uuid;
 
-use crate::device::DeviceInterface;
-
 #[derive(Clone)]
 pub struct Event {
     pub name: String,

@@ -1,5 +1,5 @@
 use crate::{
-    device::{self, Device},
+    device::Device,
     dummy::DummyDevice,
     event::{channel, Event, Sender},
     result::{Error, Result},
