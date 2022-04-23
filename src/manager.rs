@@ -1,13 +1,19 @@
 use crate::{
-    device::Device,
+    device::{self, Device},
+    dummy::DummyDevice,
     event::{channel, Event, Sender},
+    result::{Error, Result},
+    time::TimeDevice,
     types::RHomeObject,
 };
 use std::{
     collections::HashMap,
+    fs,
     sync::{Arc, Mutex},
 };
+use termion::{color, style};
 use uuid::Uuid;
+use yaml_rust::YamlLoader;
 
 pub struct DeviceManagerData {
     id: Uuid,
@@ -72,7 +78,7 @@ impl DeviceManager {
         let mut rx = tx.subscribe();
         let id = self.id();
         tokio::spawn(async move {
-            let init_event = Event::new("init".to_string(), id);
+            let init_event = Event::new("init".to_string(), id, "manager".to_string());
             _ = tx.send(init_event);
         });
 
@@ -90,11 +96,64 @@ impl DeviceManager {
         }
     }
 
+    pub(crate) fn add_devices_from_config(&mut self, config_file: String) -> Result<()> {
+        let content = fs::read_to_string(config_file)?;
+
+        let docs = YamlLoader::load_from_str(&content)?;
+        let doc = &docs[0]; // Take only first document (for now)
+        let devices = &doc["devices"].as_hash().unwrap();
+
+        for (device_name, device) in devices.iter() {
+            let device_type = device["type"].as_str().unwrap();
+            let device_name = device_name.as_str().unwrap();
+
+            //println!("device = {:?} / {:?}", device_name, device_type);
+            match create_device_with_type(device_type) {
+                Ok(dev) => {
+                    self.add(device_name.to_string(), dev);
+                }
+                Err(err) => {
+                    println!(
+                        "{}{}error: unable to create device '{:?}' : {:?}{}",
+                        color::Fg(color::Red),
+                        style::Bold,
+                        device_name,
+                        err.to_string(),
+                        style::Reset
+                    );
+                    // eprintln!(
+                    //     "unable to create device '{:?}' : {:?}",
+                    //     device_name,
+                    //     err.to_string(),
+                    // );
+                }
+            }
+        }
+        Ok(())
+    }
+
     fn handle_event(&self, ev: Event) {
         if self.id() == ev.source {
             return; // Ignore own events
         }
-        println!("{}: Received event '{}'", "manager", ev.name);
+
+        println!(
+            "{}{}{}{} : {}{}",
+            color::Fg(color::Green),
+            style::Bold,
+            "manager",
+            style::Reset,
+            ev.name,
+            style::Reset
+        );
+    }
+}
+
+fn create_device_with_type(device_type: &str) -> Result<Device> {
+    match device_type {
+        "time" => Ok(Device::new(Box::new(TimeDevice::new()))),
+        "dummy" => Ok(Device::new(Box::new(DummyDevice::new()))),
+        _ => Err(Error::new(format!("unknown device type '{}'", device_type))),
     }
 }
 

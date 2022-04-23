@@ -1,4 +1,5 @@
 use std::sync::{Arc, Mutex};
+use termion::{color, style};
 use uuid::Uuid;
 
 use crate::{
@@ -30,7 +31,11 @@ impl Device {
     }
 
     pub fn start(&mut self, tx: Sender) {
-        let ev = Event::new(format!("{} started", self.get_name()), self.id());
+        let ev = Event::new(
+            format!("{} started", self.get_name()),
+            self.id(),
+            self.get_name(),
+        );
 
         let mut rx = tx.subscribe();
         //println!("Starting device {} message loop", self.name());
@@ -55,7 +60,15 @@ impl Device {
         }
         let name = self.value.lock().unwrap().get_name();
 
-        println!("{}: {}", name, ev.name);
+        println!(
+            "{}{}{}{} : {}{}",
+            color::Fg(color::Cyan),
+            style::Bold,
+            name,
+            style::Reset,
+            ev.name,
+            style::Reset
+        );
     }
 
     pub(crate) fn set_name(&mut self, name: String) {

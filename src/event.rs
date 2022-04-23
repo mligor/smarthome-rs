@@ -1,10 +1,13 @@
 use tokio::sync::broadcast;
 use uuid::Uuid;
 
+use crate::device::DeviceInterface;
+
 #[derive(Clone)]
 pub struct Event {
     pub name: String,
     pub source: Uuid,
+    pub source_name: String,
 }
 
 pub type Sender = broadcast::Sender<Event>;
@@ -15,7 +18,11 @@ pub fn channel() -> (Sender, Receiver) {
 }
 
 impl Event {
-    pub(crate) fn new(name: String, source: Uuid) -> Event {
-        Event { name, source }
+    pub(crate) fn new(name: String, source: Uuid, source_name: String) -> Event {
+        Event {
+            name,
+            source,
+            source_name,
+        }
     }
 }

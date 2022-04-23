@@ -7,6 +7,7 @@ mod device;
 mod dummy;
 mod event;
 mod manager;
+mod result;
 mod time;
 mod types;
 
@@ -15,21 +16,23 @@ async fn main() {
     {
         let mut manager = manager::DeviceManager::new();
 
-        {
-            //let dev01 = Device::new("device1".to_string());
-            let time_dev = Device::new(Box::new(time::TimeDevice::new()));
-
-            // Add devices
-            //manager.add("dev1", dev01);
-            manager.add("time".to_string(), time_dev);
-        }
+        // manager.add(
+        //     "time".to_string(),
+        //     Device::new(Box::new(time::TimeDevice::new())),
+        // );
 
         {
             let mut mngr = manager.clone();
             tokio::spawn(async move {
-                let d = Device::new(Box::new(dummy::DummyDevice::new("light01".to_string())));
-                sleep(Duration::from_millis(1000)).await;
-                mngr.add("light1".to_string(), d.clone());
+                {
+                    if let Err(err) = mngr.add_devices_from_config("config.yaml".to_string()) {
+                        println!("unable to load configuration file: {:?}", err)
+                    }
+                };
+
+                // let d = Device::new(Box::new(dummy::DummyDevice::new("light01".to_string())));
+                // sleep(Duration::from_millis(1000)).await;
+                // mngr.add("light1".to_string(), d.clone());
             });
         }
 

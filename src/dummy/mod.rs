@@ -14,10 +14,10 @@ pub struct DummyDevice {
 }
 
 impl DummyDevice {
-    pub fn new(name: String) -> Self {
+    pub fn new() -> Self {
         Self {
-            name,
             id: Uuid::new_v4(),
+            name: "".to_string(),
         }
     }
 }
@@ -38,19 +38,20 @@ impl DeviceInterface for DummyDevice {
     }
 
     fn start(&mut self, tx: Sender) -> bool {
-        println!("starting dummy");
-        let ev = Event::new(format!("{} started", self.get_name()), self.id());
-        let tx_for_thread = tx.clone();
         let my_id = self.id();
+        let my_name = self.get_name();
+        let ev = Event::new(
+            format!("{} started", self.get_name()),
+            my_id,
+            my_name.clone(),
+        );
+        let tx_for_thread = tx.clone();
         _ = tx.send(ev);
 
         thread::spawn(move || {
-            for i in 1..10 {
-                //                println!("hi number {} from the spawned thread!", i);
-                thread::sleep(Duration::from_secs(3));
-                let ev = Event::new(format!("number {} time from dummy!", i), my_id);
-                _ = tx_for_thread.send(ev);
-            }
+            thread::sleep(Duration::from_secs(10));
+            let ev = Event::new(format!("event from {}", my_name), my_id, my_name.clone());
+            _ = tx_for_thread.send(ev);
         });
 
         true

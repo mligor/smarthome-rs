@@ -1,0 +1,9 @@
+devices:
+  bla:
+    type: unknown_type
+  time:
+    type: time
+  light1:
+    type: dummy
+  light2:
+    type: dummy
