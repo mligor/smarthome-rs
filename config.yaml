@@ -3,6 +3,13 @@ devices:
     type: unknown_type
   time:
     type: time
+    format: "%F %T"
+    local_time: true
+    every_second: false
+
+  time2:
+    type: time
+
   dummy1:
     type: dummy
   dummy2:

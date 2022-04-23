@@ -1,14 +1,20 @@
-use crate::event::{Event, Sender};
+use yaml_rust::Yaml;
+
+use crate::event::{Event, Receiver, Sender};
+use crate::result::Result;
 use std::sync::{Arc, Mutex};
 
 pub trait DeviceInterface: Send {
     fn name(&self) -> String;
     fn set_name(&mut self, name: String);
+    fn configure(&mut self, _configuration: &Yaml) -> Result<()> {
+        Ok(())
+    }
     fn start(&mut self, _tx: Sender) -> bool {
         return true;
     }
     fn stop(&mut self) {}
-    fn on_event(&mut self, _ev: Event, _tx: &Sender) {}
+    fn on_event(&mut self, _ev: &Event) {}
 }
 
 type DeviceValue = Arc<Mutex<Box<dyn DeviceInterface>>>;
@@ -25,19 +31,20 @@ impl Device {
         }
     }
 
-    pub fn start(&mut self, tx: Sender) {
+    pub fn start(&mut self, tx: Sender, mut rx: Receiver) {
         let ev = Event::new("start".to_string(), self.name());
 
-        let mut rx = tx.subscribe();
-        println!("Starting device {} message loop", self.name());
+        //let mut rx = tx.subscribe();
+        //println!("Starting device {} message loop", self.name());
         _ = tx.send(ev);
+
         let mut dev = self.clone();
         let tx2 = tx.clone();
 
         tokio::spawn(async move {
             loop {
                 match rx.recv().await {
-                    Ok(ev) => dev.handle_event(ev, &tx),
+                    Ok(ev) => dev.handle_event(&ev),
                     Err(err) => println!("error receiving event in device: {}", err),
                 }
             }
@@ -45,11 +52,8 @@ impl Device {
         self.value.lock().unwrap().start(tx2);
     }
 
-    fn handle_event(&mut self, ev: Event, tx: &Sender) {
-        if self.name() == ev.source {
-            return; // ignore own events
-        }
-        self.value.lock().unwrap().on_event(ev, tx);
+    fn handle_event(&mut self, ev: &Event) {
+        self.value.lock().unwrap().on_event(ev);
     }
 
     pub(crate) fn set_name(&mut self, name: String) {
@@ -58,5 +62,9 @@ impl Device {
 
     pub(crate) fn name(&self) -> String {
         self.value.lock().unwrap().name()
+    }
+
+    pub(crate) fn configure(&mut self, configuration: &Yaml) -> Result<()> {
+        self.value.lock().unwrap().configure(configuration)
     }
 }

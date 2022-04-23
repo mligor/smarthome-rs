@@ -37,7 +37,7 @@ impl DeviceInterface for DummyDevice {
         true
     }
 
-    fn on_event(&mut self, ev: Event, _tx: &Sender) {
+    fn on_event(&mut self, ev: &Event) {
         let name = self.name.clone();
 
         println!(
