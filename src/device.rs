@@ -1,7 +1,10 @@
+use std::sync::{Arc, Mutex};
+
 use yaml_rust::Yaml;
 
 use crate::event::{EventHandler, Sender};
 use crate::result::RHomeResult;
+use crate::Ptr;
 
 pub trait Device: Send + EventHandler {
     fn name(&self) -> String;
@@ -14,3 +17,5 @@ pub trait Device: Send + EventHandler {
     }
     fn stop(&mut self) {}
 }
+
+pub(crate) type DevicePtr = Ptr<dyn Device>;

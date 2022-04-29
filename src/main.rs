@@ -1,5 +1,5 @@
-use device::Device;
-use driver::Driver;
+use device::DevicePtr;
+use driver::DriverPtr;
 use event::{run_event_loop, EventHandler, EventSender, Receiver};
 use manager::manager;
 use result::RHomeResult;
@@ -14,12 +14,13 @@ pub(crate) mod manager;
 mod result;
 mod time;
 
-pub(crate) trait Manager: EventHandler + EventSender {
+pub(crate) trait Manager: EventHandler + EventSender + Send {
     fn load_drivers(&mut self, config_file: String) -> RHomeResult<()>;
-    fn load_driver(&mut self, name: String, driver: Arc<Mutex<Box<dyn Driver>>>)
-        -> RHomeResult<()>;
-    fn add_device(&mut self, name: String, device: Arc<Mutex<Box<dyn Device>>>);
+    fn load_driver(&mut self, name: String, driver: DriverPtr) -> RHomeResult<()>;
+    fn add_device(&mut self, name: String, device: DevicePtr);
 }
+
+pub(crate) type ManagerPtr = Ptr<dyn Manager>;
 
 #[tokio::main]
 async fn main() {
@@ -44,3 +45,5 @@ async fn main() {
         run_event_loop(rx, manager).await;
     }
 }
+
+type Ptr<T> = Arc<Mutex<Box<T>>>;

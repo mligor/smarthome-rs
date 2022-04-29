@@ -1,12 +1,12 @@
 use crate::{
     console::ConsoleDriver,
     device::Device,
-    driver::Driver,
+    driver::{Driver, DriverPtr},
     dummy::DummyDriver,
     event::{channel, run_event_loop, Event, EventHandler, EventSender, Receiver, Sender},
     result::{RHomeError, RHomeResult},
     time::driver::TimeDriver,
-    Manager,
+    Manager, ManagerPtr,
 };
 use std::{
     collections::HashMap,
@@ -18,7 +18,7 @@ use tokio::task;
 use yaml_rust::{Yaml, YamlLoader};
 
 type DeviceList = Arc<Mutex<HashMap<String, DeviceInfo>>>;
-type DriverList = Arc<Mutex<HashMap<String, Arc<Mutex<Box<dyn Driver>>>>>>;
+type DriverList = Arc<Mutex<HashMap<String, DriverPtr>>>;
 
 struct DeviceInfo {
     //device: Device,
@@ -32,7 +32,7 @@ pub(crate) struct ManagerImpl {
     drivers: DriverList,
 }
 
-pub(crate) fn manager() -> Arc<Mutex<Box<impl Manager>>> {
+pub(crate) fn manager() -> ManagerPtr {
     Arc::new(Mutex::new(Box::new(ManagerImpl::new())))
 }
 
