@@ -5,6 +5,7 @@ use manager::manager;
 use result::RHomeResult;
 use std::sync::{Arc, Mutex};
 
+mod console;
 pub(crate) mod device;
 pub(crate) mod driver;
 mod dummy;

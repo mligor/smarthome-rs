@@ -1,4 +1,5 @@
 use crate::{
+    console::ConsoleDriver,
     device::Device,
     driver::Driver,
     dummy::DummyDriver,
@@ -81,10 +82,6 @@ impl EventHandler for ManagerImpl {
             _ = sender.send(ev.clone());
         }
     }
-
-    // fn create_receiver(&mut self) -> Receiver {
-    //     self.tx.subscribe()
-    // }
 }
 
 impl EventSender for ManagerImpl {
@@ -149,10 +146,9 @@ impl Manager for ManagerImpl {
         let (tx, rx) = channel();
         {
             let mut dev = device.lock().unwrap();
-            //dev.set_receiver(rx);
             dev.set_name(name.clone());
         }
-        devices.insert(name, DeviceInfo { tx: tx });
+        devices.insert(name.clone(), DeviceInfo { tx: tx });
         {
             let mut dev = device.lock().unwrap();
             let tx2 = self.tx.clone();
@@ -161,6 +157,17 @@ impl Manager for ManagerImpl {
         task::spawn(async move {
             run_event_loop(rx, device).await;
         });
+
+        println!(
+            "{}{}{}{} : device '{}{}{}' added",
+            color::Fg(color::Green),
+            style::Bold,
+            "manager",
+            style::Reset,
+            color::Fg(color::Cyan),
+            name,
+            style::Reset
+        );
     }
 }
 
@@ -172,6 +179,7 @@ fn create_driver(
     let mut d: Box<dyn Driver> = match name {
         "time" => Ok(TimeDriver::new()),
         "dummy" => Ok(DummyDriver::new()),
+        "console" => Ok(ConsoleDriver::new()),
         _ => Err(RHomeError::new(format!("unknown driver '{}'", name))),
     }?;
     d.load(configuration, manager)?;

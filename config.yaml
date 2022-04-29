@@ -22,3 +22,5 @@ drivers:
     local_time: true
     every_second: false
   dummy:
+  console:
+    name: console_01
