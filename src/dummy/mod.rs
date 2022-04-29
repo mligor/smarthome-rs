@@ -1,36 +1,29 @@
 use crate::{
     device::Device,
     driver::Driver,
-    event::{Event, EventHandler, Sender},
+    event::{Event, EventHandler},
 };
-use std::{
-    sync::{Arc, Mutex},
-    thread,
-    time::Duration,
-};
+use std::sync::{Arc, Mutex};
 use termion::{color, style};
 
+#[derive(Default)]
 pub struct DummyDevice {
     name: String,
 }
 
 impl DummyDevice {
     pub fn new() -> Self {
-        Self {
-            name: "".to_string(),
-        }
+        DummyDevice::default()
     }
 }
 
 impl EventHandler for DummyDevice {
     fn handle_event(&mut self, ev: Event) {
-        let name = self.name.clone();
-
         println!(
             "{}{}{}{} : {}{}",
             color::Fg(color::Cyan),
             style::Bold,
-            name,
+            self.name,
             style::Reset,
             ev,
             style::Reset
@@ -46,22 +39,6 @@ impl Device for DummyDevice {
     fn set_name(&mut self, name: String) {
         self.name = name
     }
-
-    fn start(&mut self, tx: Sender) -> bool {
-        let my_name = self.name();
-        thread::spawn(move || loop {
-            thread::sleep(Duration::from_secs(10));
-            let ev = Event::new("test".to_string(), my_name.clone());
-            _ = tx.send(ev);
-        });
-        true
-    }
-
-    fn configure(&mut self, _configuration: &yaml_rust::Yaml) -> crate::result::RHomeResult<()> {
-        Ok(())
-    }
-
-    fn stop(&mut self) {}
 }
 
 pub struct DummyDriver {}
@@ -79,7 +56,7 @@ impl Driver for DummyDriver {
         manager: &mut dyn crate::Manager,
     ) -> crate::result::RHomeResult<()> {
         manager.add_device(
-            "d1".to_string(),
+            "dummy_watcher".to_string(),
             Arc::new(Mutex::new(Box::new(DummyDevice::new()))),
         );
         Ok(())

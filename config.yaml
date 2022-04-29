@@ -20,5 +20,5 @@ drivers:
   time:
     format: "%F %T"
     local_time: true
-    every_second: true
+    every_second: false
   dummy:
