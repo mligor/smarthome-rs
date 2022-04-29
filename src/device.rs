@@ -4,7 +4,6 @@ use crate::event::{EventHandler, Sender};
 use crate::result::RHomeResult;
 
 pub trait Device: Send + EventHandler {
-    //    fn set_receiver(&mut self, rx: Receiver);
     fn name(&self) -> String;
     fn set_name(&mut self, name: String);
     fn configure(&mut self, _configuration: &Yaml) -> RHomeResult<()> {
@@ -14,5 +13,4 @@ pub trait Device: Send + EventHandler {
         return true;
     }
     fn stop(&mut self) {}
-    //    fn on_event(&mut self, _ev: &Event) {}
 }

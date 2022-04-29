@@ -34,7 +34,6 @@ impl Event {
 
 pub trait EventHandler {
     fn handle_event(&mut self, _ev: Event) {}
-    // fn create_receiver(&mut self) -> Receiver;
 }
 
 pub async fn run_event_loop(

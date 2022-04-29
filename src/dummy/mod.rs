@@ -10,7 +10,6 @@ use std::{
 };
 use termion::{color, style};
 
-//#[derive(Clone, PartialEq)]
 pub struct DummyDevice {
     name: String,
 }
@@ -37,14 +36,9 @@ impl EventHandler for DummyDevice {
             style::Reset
         );
     }
-
-    // fn create_receiver(&mut self) -> Receiver {}
 }
 
 impl Device for DummyDevice {
-    // fn set_receiver(&mut self, rx: crate::event::Receiver) {
-    //     self.rx = Some(rx);
-    // }
     fn name(&self) -> String {
         self.name.clone()
     }
@@ -90,12 +84,4 @@ impl Driver for DummyDriver {
         );
         Ok(())
     }
-
-    // fn add_device(
-    //     &mut self,
-    //     name: String,
-    //     device: crate::device::Device,
-    //     configuration: &yaml_rust::Yaml,
-    // ) {
-    // }
 }

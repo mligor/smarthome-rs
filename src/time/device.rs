@@ -5,21 +5,15 @@ use crate::{
 use chrono::{Local, Timelike, Utc};
 use std::{collections::HashMap, thread, time::Duration};
 
-//#[derive(Clone, PartialEq)]
 pub(crate) struct TimeDevice {
     name: String,
     format: String,
     local_time: bool,
     every_second: bool,
-    //    rx: Option<Receiver>,
 }
 impl EventHandler for TimeDevice {}
 
 impl Device for TimeDevice {
-    // fn set_receiver(&mut self, rx: crate::event::Receiver) {
-    //     self.rx = Some(rx);
-    // }
-
     fn name(&self) -> String {
         self.name.clone()
     }
@@ -87,7 +81,6 @@ impl TimeDevice {
             format: "%+".to_string(),
             local_time: false,
             every_second: false,
-            // rx: None,
         }
     }
 }
