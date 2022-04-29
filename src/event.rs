@@ -33,17 +33,14 @@ impl Event {
 }
 
 pub trait EventHandler {
-    fn handle_event(&mut self, ev: Event);
-    fn create_receiver(&mut self) -> Receiver;
+    fn handle_event(&mut self, _ev: Event) {}
+    // fn create_receiver(&mut self) -> Receiver;
 }
 
-pub async fn run_event_loop(handler: Arc<Mutex<Box<impl EventHandler>>>) {
-    let mut rx: Receiver;
-    {
-        let mut h = handler.lock().unwrap();
-        rx = h.create_receiver();
-    }
-
+pub async fn run_event_loop(
+    mut rx: Receiver,
+    handler: Arc<Mutex<Box<impl EventHandler + ?Sized>>>,
+) {
     loop {
         match rx.recv().await {
             Ok(ev) => {
@@ -53,4 +50,8 @@ pub async fn run_event_loop(handler: Arc<Mutex<Box<impl EventHandler>>>) {
             Err(err) => println!("error receiving event in manager: {}", err),
         }
     }
+}
+
+pub trait EventSender {
+    fn get_receiver(&self) -> Receiver;
 }

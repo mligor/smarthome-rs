@@ -1,7 +1,7 @@
 use crate::{
-    device::IDevice,
-    driver::IDriver,
-    event::{Event, Receiver, Sender},
+    device::Device,
+    driver::Driver,
+    event::{Event, EventHandler, Sender},
 };
 use std::{
     sync::{Arc, Mutex},
@@ -13,19 +13,38 @@ use termion::{color, style};
 //#[derive(Clone, PartialEq)]
 pub struct DummyDevice {
     name: String,
-    rx: Option<Receiver>,
 }
 
 impl DummyDevice {
     pub fn new() -> Self {
         Self {
             name: "".to_string(),
-            rx: None,
         }
     }
 }
 
-impl IDevice for DummyDevice {
+impl EventHandler for DummyDevice {
+    fn handle_event(&mut self, ev: Event) {
+        let name = self.name.clone();
+
+        println!(
+            "{}{}{}{} : {}{}",
+            color::Fg(color::Cyan),
+            style::Bold,
+            name,
+            style::Reset,
+            ev,
+            style::Reset
+        );
+    }
+
+    // fn create_receiver(&mut self) -> Receiver {}
+}
+
+impl Device for DummyDevice {
+    // fn set_receiver(&mut self, rx: crate::event::Receiver) {
+    //     self.rx = Some(rx);
+    // }
     fn name(&self) -> String {
         self.name.clone()
     }
@@ -44,34 +63,22 @@ impl IDevice for DummyDevice {
         true
     }
 
-    fn on_event(&mut self, ev: &Event) {
-        let name = self.name.clone();
-
-        println!(
-            "{}{}{}{} : {}{}",
-            color::Fg(color::Cyan),
-            style::Bold,
-            name,
-            style::Reset,
-            ev,
-            style::Reset
-        );
+    fn configure(&mut self, _configuration: &yaml_rust::Yaml) -> crate::result::RHomeResult<()> {
+        Ok(())
     }
 
-    fn set_receiver(&mut self, rx: crate::event::Receiver) {
-        self.rx = Some(rx);
-    }
+    fn stop(&mut self) {}
 }
 
-pub struct Driver {}
+pub struct DummyDriver {}
 
-impl Driver {
-    pub(crate) fn new() -> Box<dyn IDriver> {
+impl DummyDriver {
+    pub(crate) fn new() -> Box<dyn Driver> {
         Box::new(Self {})
     }
 }
 
-impl IDriver for Driver {
+impl Driver for DummyDriver {
     fn load(
         &mut self,
         _configuration: &yaml_rust::Yaml,

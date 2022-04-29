@@ -1,6 +1,6 @@
 use crate::{
-    device::IDevice,
-    event::{Event, Receiver, Sender},
+    device::Device,
+    event::{Event, EventHandler, Sender},
 };
 use chrono::{Local, Timelike, Utc};
 use std::{collections::HashMap, thread, time::Duration};
@@ -11,16 +11,38 @@ pub(crate) struct TimeDevice {
     format: String,
     local_time: bool,
     every_second: bool,
-    rx: Option<Receiver>,
+    //    rx: Option<Receiver>,
 }
+impl EventHandler for TimeDevice {}
 
-impl IDevice for TimeDevice {
+impl Device for TimeDevice {
+    // fn set_receiver(&mut self, rx: crate::event::Receiver) {
+    //     self.rx = Some(rx);
+    // }
+
     fn name(&self) -> String {
         self.name.clone()
     }
 
     fn set_name(&mut self, name: String) {
         self.name = name
+    }
+
+    fn configure(&mut self, configuration: &yaml_rust::Yaml) -> crate::result::RHomeResult<()> {
+        self.format = configuration["format"]
+            .as_str()
+            .unwrap_or(&self.format)
+            .to_string();
+
+        self.local_time = configuration["local_time"]
+            .as_bool()
+            .unwrap_or(self.local_time);
+
+        self.every_second = configuration["every_second"]
+            .as_bool()
+            .unwrap_or(self.every_second);
+
+        Ok(())
     }
 
     fn start(&mut self, tx: Sender) -> bool {
@@ -56,27 +78,6 @@ impl IDevice for TimeDevice {
 
         true
     }
-
-    fn configure(&mut self, configuration: &yaml_rust::Yaml) -> crate::result::RHomeResult<()> {
-        self.format = configuration["format"]
-            .as_str()
-            .unwrap_or(&self.format)
-            .to_string();
-
-        self.local_time = configuration["local_time"]
-            .as_bool()
-            .unwrap_or(self.local_time);
-
-        self.every_second = configuration["every_second"]
-            .as_bool()
-            .unwrap_or(self.every_second);
-
-        Ok(())
-    }
-
-    fn set_receiver(&mut self, rx: crate::event::Receiver) {
-        self.rx = Some(rx);
-    }
 }
 
 impl TimeDevice {
@@ -86,7 +87,7 @@ impl TimeDevice {
             format: "%+".to_string(),
             local_time: false,
             every_second: false,
-            rx: None,
+            // rx: None,
         }
     }
 }

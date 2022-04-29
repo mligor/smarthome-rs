@@ -1,6 +1,6 @@
-use device::IDevice;
-use driver::IDriver;
-use event::{run_event_loop, EventHandler};
+use device::Device;
+use driver::Driver;
+use event::{run_event_loop, EventHandler, EventSender, Receiver};
 use manager::manager;
 use result::RHomeResult;
 use std::sync::{Arc, Mutex};
@@ -99,14 +99,11 @@ mod time;
 //     }
 // }
 
-pub(crate) trait Manager: EventHandler {
+pub(crate) trait Manager: EventHandler + EventSender {
     fn load_drivers(&mut self, config_file: String) -> RHomeResult<()>;
-    fn load_driver(
-        &mut self,
-        name: String,
-        driver: Arc<Mutex<Box<dyn IDriver>>>,
-    ) -> RHomeResult<()>;
-    fn add_device(&mut self, name: String, device: Arc<Mutex<Box<dyn IDevice>>>);
+    fn load_driver(&mut self, name: String, driver: Arc<Mutex<Box<dyn Driver>>>)
+        -> RHomeResult<()>;
+    fn add_device(&mut self, name: String, device: Arc<Mutex<Box<dyn Device>>>);
 }
 
 // pub(crate) struct Ptr<T: ?Sized> {
@@ -134,7 +131,7 @@ async fn main() {
         //     "time".to_string(),
         //     Device::new(Box::new(time::TimeDevice::new())),
         // );
-
+        let rx: Receiver;
         {
             let mngr = manager.clone();
             tokio::spawn(async move {
@@ -153,11 +150,17 @@ async fn main() {
                 // mngr.add("light1".to_string(), d.clone());
             });
         }
+        {
+            let mngr = manager.clone();
+            let m = mngr.lock().unwrap();
+            rx = m.get_receiver();
+        }
 
         //println!("Starting manager");
         // {
         //     let mngr = manager.clone();
         // }
-        run_event_loop(manager).await;
+
+        run_event_loop(rx, manager).await;
     }
 }
