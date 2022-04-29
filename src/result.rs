@@ -5,26 +5,26 @@ use yaml_rust::ScanError;
 
 #[derive(Clone, PartialEq, Debug, Eq, Display)]
 #[display(fmt = "{}", s)]
-pub struct Error {
+pub struct RHomeError {
     s: String,
 }
 
-impl Error {
+impl RHomeError {
     pub fn new(s: String) -> Self {
         Self { s }
     }
 }
 
-impl From<io::Error> for Error {
+impl From<io::Error> for RHomeError {
     fn from(e: io::Error) -> Self {
-        Error::new(e.to_string())
+        RHomeError::new(e.to_string())
     }
 }
 
-impl From<ScanError> for Error {
+impl From<ScanError> for RHomeError {
     fn from(e: ScanError) -> Self {
-        Error::new(e.to_string())
+        RHomeError::new(e.to_string())
     }
 }
 
-pub type Result<T> = result::Result<T, Error>;
+pub type RHomeResult<T> = result::Result<T, RHomeError>;

@@ -1,24 +1,31 @@
 use crate::{
-    device::DeviceInterface,
-    event::{Event, Sender},
+    device::IDevice,
+    driver::IDriver,
+    event::{Event, Receiver, Sender},
 };
-use std::{thread, time::Duration};
+use std::{
+    sync::{Arc, Mutex},
+    thread,
+    time::Duration,
+};
 use termion::{color, style};
 
-#[derive(Clone, PartialEq)]
+//#[derive(Clone, PartialEq)]
 pub struct DummyDevice {
     name: String,
+    rx: Option<Receiver>,
 }
 
 impl DummyDevice {
     pub fn new() -> Self {
         Self {
             name: "".to_string(),
+            rx: None,
         }
     }
 }
 
-impl DeviceInterface for DummyDevice {
+impl IDevice for DummyDevice {
     fn name(&self) -> String {
         self.name.clone()
     }
@@ -50,4 +57,38 @@ impl DeviceInterface for DummyDevice {
             style::Reset
         );
     }
+
+    fn set_receiver(&mut self, rx: crate::event::Receiver) {
+        self.rx = Some(rx);
+    }
+}
+
+pub struct Driver {}
+
+impl Driver {
+    pub(crate) fn new() -> Box<dyn IDriver> {
+        Box::new(Self {})
+    }
+}
+
+impl IDriver for Driver {
+    fn load(
+        &mut self,
+        _configuration: &yaml_rust::Yaml,
+        manager: &mut dyn crate::Manager,
+    ) -> crate::result::RHomeResult<()> {
+        manager.add_device(
+            "d1".to_string(),
+            Arc::new(Mutex::new(Box::new(DummyDevice::new()))),
+        );
+        Ok(())
+    }
+
+    // fn add_device(
+    //     &mut self,
+    //     name: String,
+    //     device: crate::device::Device,
+    //     configuration: &yaml_rust::Yaml,
+    // ) {
+    // }
 }

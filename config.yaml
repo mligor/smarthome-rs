@@ -1,18 +1,24 @@
-devices:
+_devices:
   bla:
-    type: unknown_type
+    driver: unknown_driver
   time:
-    type: time
+    driver: time
     format: "%F %T"
     local_time: true
     every_second: false
 
   time2:
-    type: time
+    driver: time
 
   dummy1:
-    type: dummy
+    driver: dummy
   dummy2:
-    type: dummy
+    driver: dummy
   # dummy3:
   #   type: dummy
+drivers:
+  time:
+    format: "%F %T"
+    local_time: true
+    every_second: true
+  dummy:
