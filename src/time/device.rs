@@ -19,10 +19,6 @@ impl Device for TimeDevice {
         self.name.clone()
     }
 
-    fn set_name(&mut self, name: String) {
-        self.name = name
-    }
-
     fn configure(&mut self, configuration: &yaml_rust::Yaml) -> crate::result::RHomeResult<()> {
         self.format = configuration["format"]
             .as_str()
@@ -76,9 +72,9 @@ impl Device for TimeDevice {
 }
 
 impl TimeDevice {
-    pub fn new() -> Self {
+    pub fn new(name: String) -> Self {
         Self {
-            name: "".to_string(),
+            name: name,
             format: "%+".to_string(),
             local_time: false,
             every_second: false,

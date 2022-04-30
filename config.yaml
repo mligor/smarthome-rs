@@ -22,5 +22,6 @@ drivers:
     local_time: true
     every_second: false
   dummy:
-  console:
+  telnet:
     name: console_01
+    listen_on: 127.0.0.1:7800

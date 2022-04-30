@@ -5,7 +5,6 @@ use yaml_rust::Yaml;
 
 pub(crate) trait Device: Send + EventHandler {
     fn name(&self) -> String;
-    fn set_name(&mut self, name: String);
     fn configure(&mut self, _configuration: &Yaml) -> RHomeResult<()> {
         Ok(())
     }

@@ -38,10 +38,10 @@ impl Driver for TimeDriver {
             .as_bool()
             .unwrap_or(self.every_second);
 
-        let mut t = TimeDevice::new();
+        let mut t = TimeDevice::new("time".to_string());
         t.configure(configuration).unwrap();
 
-        manager.add_device("time".to_string(), DevicePtr::new(Box::new(t)))?;
+        manager.add_device(DevicePtr::new(Box::new(t)))?;
         Ok(())
     }
 }

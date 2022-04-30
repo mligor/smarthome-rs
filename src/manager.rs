@@ -1,10 +1,10 @@
 use crate::{
-    console::ConsoleDriver,
     device::DevicePtr,
     driver::{Driver, DriverPtr},
     dummy::DummyDriver,
     event::{channel, run_event_loop, Event, EventHandler, EventSender, Receiver, Sender},
     result::{RHomeError, RHomeResult},
+    telnet::TelnetDriver,
     time::driver::TimeDriver,
     Manager, ManagerPtr,
 };
@@ -137,12 +137,13 @@ impl Manager for ManagerImpl {
         Ok(())
     }
 
-    fn add_device(&mut self, name: String, device: DevicePtr) -> RHomeResult<()> {
+    fn add_device(&mut self, device: DevicePtr) -> RHomeResult<()> {
         let mut devices = self.devices.lock().unwrap();
         let (tx, rx) = channel();
+        let name: String;
         {
-            let mut dev = device.lock().unwrap();
-            dev.set_name(name.clone());
+            let dev = device.lock().unwrap();
+            name = dev.name();
         }
         devices.insert(name.clone(), DeviceInfo { tx: tx });
         {
@@ -176,7 +177,7 @@ fn create_driver(
     let mut d: Box<dyn Driver> = match name {
         "time" => Ok(TimeDriver::new()),
         "dummy" => Ok(DummyDriver::new()),
-        "console" => Ok(ConsoleDriver::new()),
+        "telnet" => Ok(TelnetDriver::new()),
         _ => Err(RHomeError::new(format!("unknown driver '{}'", name))),
     }?;
     d.load(configuration, manager)?;

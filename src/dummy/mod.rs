@@ -6,14 +6,13 @@ use crate::{
 };
 use termion::{color, style};
 
-#[derive(Default)]
 pub struct DummyDevice {
     name: String,
 }
 
 impl DummyDevice {
-    pub fn new() -> Self {
-        DummyDevice::default()
+    pub fn new(name: String) -> Self {
+        Self { name }
     }
 }
 
@@ -36,10 +35,6 @@ impl Device for DummyDevice {
         self.name.clone()
     }
 
-    fn set_name(&mut self, name: String) {
-        self.name = name
-    }
-
     fn start(&mut self, _tx: crate::event::Sender) -> RHomeResult<()> {
         Ok(())
     }
@@ -59,10 +54,9 @@ impl Driver for DummyDriver {
         _configuration: &yaml_rust::Yaml,
         manager: &mut dyn crate::Manager,
     ) -> crate::result::RHomeResult<()> {
-        manager.add_device(
+        manager.add_device(DevicePtr::new(Box::new(DummyDevice::new(
             "dummy_watcher".to_string(),
-            DevicePtr::new(Box::new(DummyDevice::new())),
-        )?;
+        ))))?;
         Ok(())
     }
 }

@@ -1,37 +1,19 @@
-use crate::{device::Device, driver::Driver, Manager};
-use device::ConsoleDevice;
-use std::sync::{Arc, Mutex};
+use crate::{device::DevicePtr, driver::Driver, result::RHomeResult, Manager};
+use device::TelnetDevice;
+use yaml_rust::Yaml;
 
 mod device;
 
-pub(crate) struct ConsoleDriver<D, R, M>
-where
-    R: Driver<M>,
-    M: Manager<D, R>,
-    D: Device, {}
+pub struct TelnetDriver {}
 
-impl<D, R, M> ConsoleDriver<D, R, M>
-where
-    R: Driver<M>,
-    M: Manager<D, R>,
-    D: Device,
-{
-    pub(crate) fn new() -> Box<R> {
+impl TelnetDriver {
+    pub(crate) fn new() -> Box<dyn Driver> {
         Box::new(Self {})
     }
 }
 
-impl<D, R, M> Driver<M> for ConsoleDriver<D, R, M>
-where
-    D: Device,
-    R: Driver<M>,
-    M: Manager<D, R>,
-{
-    fn initialize(
-        &mut self,
-        configuration: &yaml_rust::Yaml,
-        manager: Arc<Mutex<Box<M>>>,
-    ) -> crate::result::RHomeResult<()> {
+impl Driver for TelnetDriver {
+    fn load(&mut self, configuration: &Yaml, manager: &mut dyn Manager) -> RHomeResult<()> {
         let name = configuration["name"]
             .as_str()
             .unwrap_or("console")
@@ -42,9 +24,7 @@ where
             .unwrap_or("127.0.0.1:7800")
             .to_string();
 
-        manager.add_device(Arc::new(Mutex::new(Box::new(ConsoleDevice::new(
-            name, listen_on,
-        )))));
+        manager.add_device(DevicePtr::new(Box::new(TelnetDevice::new(name, listen_on))))?;
         Ok(())
     }
 }

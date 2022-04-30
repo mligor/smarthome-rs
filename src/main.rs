@@ -11,14 +11,14 @@ pub(crate) mod event;
 pub(crate) mod manager;
 pub(crate) mod result;
 
-mod console;
 mod dummy;
+mod telnet;
 mod time;
 
 pub(crate) trait Manager: EventHandler + EventSender + Send {
     fn load_drivers(&mut self, config_file: String) -> RHomeResult<()>;
     fn load_driver(&mut self, name: String, driver: DriverPtr) -> RHomeResult<()>;
-    fn add_device(&mut self, name: String, device: DevicePtr) -> RHomeResult<()>;
+    fn add_device(&mut self, device: DevicePtr) -> RHomeResult<()>;
 }
 
 pub(crate) type ManagerPtr = Ptr<dyn Manager>;

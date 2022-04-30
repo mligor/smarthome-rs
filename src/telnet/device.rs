@@ -6,18 +6,18 @@ use tokio::{
 
 use crate::{
     device::Device,
-    event::{Event, EventHandler},
+    event::{Event, EventHandler, Sender},
+    result::RHomeResult,
 };
 
-#[derive(Default)]
-pub struct ConsoleDevice {
+pub struct TelnetDevice {
     name: String,
     listen_on: String,
 }
 
-impl ConsoleDevice {
+impl TelnetDevice {
     pub fn new(name: String, listen_on: String) -> Self {
-        ConsoleDevice { name, listen_on }
+        Self { name, listen_on }
     }
 
     fn execute_command(&mut self, command: String) {
@@ -31,7 +31,7 @@ impl ConsoleDevice {
     }
 }
 
-impl EventHandler for ConsoleDevice {
+impl EventHandler for TelnetDevice {
     fn handle_event(&mut self, ev: Event) {
         println!(
             "{}{}{}{} : {}{}",
@@ -45,12 +45,12 @@ impl EventHandler for ConsoleDevice {
     }
 }
 
-impl Device for ConsoleDevice {
+impl Device for TelnetDevice {
     fn name(&self) -> String {
         self.name.clone()
     }
 
-    fn start(&mut self, tx: crate::event::Sender) -> bool {
+    fn start(&mut self, tx: Sender) -> RHomeResult<()> {
         let listen_on = self.listen_on.clone();
         let my_name = self.name.clone();
 
@@ -78,7 +78,7 @@ impl Device for ConsoleDevice {
                             Ok(size) => {
                                 let command = String::from_utf8(data[0..size].to_vec()).unwrap();
                                 let command = command.trim().to_string();
-                                tx.send(Event::new(command.clone(), my_name.clone()));
+                                _ = tx.send(Event::new(command.clone(), my_name.clone()));
                                 // echo everything!
                                 // self.execute_command(
                                 //     String::from_utf8(data[0..size].to_vec()).unwrap(),
@@ -101,6 +101,6 @@ impl Device for ConsoleDevice {
                 });
             }
         });
-        true
+        Ok(())
     }
 }
