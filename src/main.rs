@@ -3,21 +3,22 @@ use driver::DriverPtr;
 use event::{run_event_loop, EventHandler, EventSender, Receiver};
 use manager::manager;
 use result::RHomeResult;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
-mod console;
 pub(crate) mod device;
 pub(crate) mod driver;
-mod dummy;
-mod event;
+pub(crate) mod event;
 pub(crate) mod manager;
-mod result;
+pub(crate) mod result;
+
+mod console;
+mod dummy;
 mod time;
 
 pub(crate) trait Manager: EventHandler + EventSender + Send {
     fn load_drivers(&mut self, config_file: String) -> RHomeResult<()>;
     fn load_driver(&mut self, name: String, driver: DriverPtr) -> RHomeResult<()>;
-    fn add_device(&mut self, name: String, device: DevicePtr);
+    fn add_device(&mut self, name: String, device: DevicePtr) -> RHomeResult<()>;
 }
 
 pub(crate) type ManagerPtr = Ptr<dyn Manager>;
@@ -46,4 +47,39 @@ async fn main() {
     }
 }
 
-type Ptr<T> = Arc<Mutex<Box<T>>>;
+pub(crate) struct Ptr<T>
+where
+    T: ?Sized,
+{
+    value: Arc<Mutex<Box<T>>>,
+}
+
+impl<T> Ptr<T>
+where
+    T: ?Sized,
+{
+    pub(crate) fn new(d: Box<T>) -> Self {
+        Self {
+            value: Arc::new(Mutex::new(d)),
+        }
+    }
+
+    pub(crate) fn lock(&self) -> Result<MutexGuard<Box<T>>, PoisonError<MutexGuard<Box<T>>>> {
+        self.value.lock()
+    }
+}
+
+impl<T> Clone for Ptr<T>
+where
+    T: ?Sized,
+{
+    fn clone(&self) -> Self {
+        Self {
+            value: self.value.clone(),
+        }
+    }
+}
+
+// struct Ptr<T> {
+//     value: Arc<Mutex<Box<T>>>,
+// }

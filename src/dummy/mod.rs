@@ -1,9 +1,9 @@
 use crate::{
-    device::Device,
+    device::{Device, DevicePtr},
     driver::Driver,
     event::{Event, EventHandler},
+    result::RHomeResult,
 };
-use std::sync::{Arc, Mutex};
 use termion::{color, style};
 
 #[derive(Default)]
@@ -39,6 +39,10 @@ impl Device for DummyDevice {
     fn set_name(&mut self, name: String) {
         self.name = name
     }
+
+    fn start(&mut self, _tx: crate::event::Sender) -> RHomeResult<()> {
+        Ok(())
+    }
 }
 
 pub struct DummyDriver {}
@@ -57,8 +61,8 @@ impl Driver for DummyDriver {
     ) -> crate::result::RHomeResult<()> {
         manager.add_device(
             "dummy_watcher".to_string(),
-            Arc::new(Mutex::new(Box::new(DummyDevice::new()))),
-        );
+            DevicePtr::new(Box::new(DummyDevice::new())),
+        )?;
         Ok(())
     }
 }

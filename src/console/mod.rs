@@ -1,6 +1,5 @@
-use crate::driver::Driver;
+use crate::{device::DevicePtr, driver::Driver};
 use device::ConsoleDevice;
-use std::sync::{Arc, Mutex};
 
 mod device;
 
@@ -23,7 +22,7 @@ impl Driver for ConsoleDriver {
             .unwrap_or("console")
             .to_string();
 
-        manager.add_device(name, Arc::new(Mutex::new(Box::new(ConsoleDevice::new()))));
+        manager.add_device(name, DevicePtr::new(Box::new(ConsoleDevice::new())))?;
         Ok(())
     }
 }

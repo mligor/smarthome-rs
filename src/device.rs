@@ -1,20 +1,15 @@
-use std::sync::{Arc, Mutex};
-
-use yaml_rust::Yaml;
-
 use crate::event::{EventHandler, Sender};
 use crate::result::RHomeResult;
 use crate::Ptr;
+use yaml_rust::Yaml;
 
-pub trait Device: Send + EventHandler {
+pub(crate) trait Device: Send + EventHandler {
     fn name(&self) -> String;
     fn set_name(&mut self, name: String);
     fn configure(&mut self, _configuration: &Yaml) -> RHomeResult<()> {
         Ok(())
     }
-    fn start(&mut self, _tx: Sender) -> bool {
-        return true;
-    }
+    fn start(&mut self, _tx: Sender) -> RHomeResult<()>;
     fn stop(&mut self) {}
 }
 

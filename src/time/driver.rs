@@ -1,6 +1,4 @@
-use std::sync::{Arc, Mutex};
-
-use crate::device::Device;
+use crate::device::{Device, DevicePtr};
 use crate::driver::Driver;
 use crate::result::RHomeResult;
 use crate::Manager;
@@ -43,7 +41,7 @@ impl Driver for TimeDriver {
         let mut t = TimeDevice::new();
         t.configure(configuration).unwrap();
 
-        manager.add_device("time".to_string(), Arc::new(Mutex::new(Box::new(t))));
+        manager.add_device("time".to_string(), DevicePtr::new(Box::new(t)))?;
         Ok(())
     }
 }

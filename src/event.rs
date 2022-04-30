@@ -1,24 +1,23 @@
 use derive_more::Display;
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use std::collections::HashMap;
 use tokio::sync::broadcast;
+
+use crate::Ptr;
 
 pub type EventData = HashMap<String, String>;
 
 #[derive(Clone, Display)]
 #[display(fmt = "src={}, event={}, data={:?}", source, name, data)]
-pub struct Event {
+pub(crate) struct Event {
     pub name: String,
     pub data: EventData,
     pub source: String,
 }
 
-pub type Sender = broadcast::Sender<Event>;
-pub type Receiver = broadcast::Receiver<Event>;
+pub(crate) type Sender = broadcast::Sender<Event>;
+pub(crate) type Receiver = broadcast::Receiver<Event>;
 
-pub fn channel() -> (Sender, Receiver) {
+pub(crate) fn channel() -> (Sender, Receiver) {
     broadcast::channel::<Event>(1024)
 }
 
@@ -32,14 +31,11 @@ impl Event {
     }
 }
 
-pub trait EventHandler {
+pub(crate) trait EventHandler {
     fn handle_event(&mut self, _ev: Event) {}
 }
 
-pub async fn run_event_loop(
-    mut rx: Receiver,
-    handler: Arc<Mutex<Box<impl EventHandler + ?Sized>>>,
-) {
+pub(crate) async fn run_event_loop(mut rx: Receiver, handler: Ptr<impl EventHandler + ?Sized>) {
     loop {
         match rx.recv().await {
             Ok(ev) => {
@@ -51,6 +47,6 @@ pub async fn run_event_loop(
     }
 }
 
-pub trait EventSender {
+pub(crate) trait EventSender {
     fn get_receiver(&self) -> Receiver;
 }

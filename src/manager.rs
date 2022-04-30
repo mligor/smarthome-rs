@@ -1,6 +1,6 @@
 use crate::{
     console::ConsoleDriver,
-    device::Device,
+    device::DevicePtr,
     driver::{Driver, DriverPtr},
     dummy::DummyDriver,
     event::{channel, run_event_loop, Event, EventHandler, EventSender, Receiver, Sender},
@@ -33,7 +33,7 @@ pub(crate) struct ManagerImpl {
 }
 
 pub(crate) fn manager() -> ManagerPtr {
-    Arc::new(Mutex::new(Box::new(ManagerImpl::new())))
+    ManagerPtr::new(Box::new(ManagerImpl::new()))
 }
 
 impl ManagerImpl {
@@ -131,17 +131,13 @@ impl Manager for ManagerImpl {
         Ok(())
     }
 
-    fn load_driver(
-        &mut self,
-        name: String,
-        driver: Arc<Mutex<Box<dyn Driver>>>,
-    ) -> RHomeResult<()> {
+    fn load_driver(&mut self, name: String, driver: DriverPtr) -> RHomeResult<()> {
         let mut drivers = self.drivers.lock().unwrap();
         drivers.insert(name, driver);
         Ok(())
     }
 
-    fn add_device(&mut self, name: String, device: Arc<Mutex<Box<dyn Device>>>) {
+    fn add_device(&mut self, name: String, device: DevicePtr) -> RHomeResult<()> {
         let mut devices = self.devices.lock().unwrap();
         let (tx, rx) = channel();
         {
@@ -152,7 +148,7 @@ impl Manager for ManagerImpl {
         {
             let mut dev = device.lock().unwrap();
             let tx2 = self.tx.clone();
-            dev.start(tx2);
+            dev.start(tx2)?;
         }
         task::spawn(async move {
             run_event_loop(rx, device).await;
@@ -168,6 +164,7 @@ impl Manager for ManagerImpl {
             name,
             style::Reset
         );
+        Ok(())
     }
 }
 
@@ -175,7 +172,7 @@ fn create_driver(
     name: &str,
     configuration: &Yaml,
     manager: &mut dyn Manager,
-) -> RHomeResult<Arc<Mutex<Box<dyn Driver>>>> {
+) -> RHomeResult<DriverPtr> {
     let mut d: Box<dyn Driver> = match name {
         "time" => Ok(TimeDriver::new()),
         "dummy" => Ok(DummyDriver::new()),
@@ -183,5 +180,5 @@ fn create_driver(
         _ => Err(RHomeError::new(format!("unknown driver '{}'", name))),
     }?;
     d.load(configuration, manager)?;
-    Ok(Arc::new(Mutex::new(d)))
+    Ok(DriverPtr::new(d))
 }

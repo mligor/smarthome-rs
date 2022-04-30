@@ -2,7 +2,8 @@ use termion::{color, style};
 
 use crate::{
     device::Device,
-    event::{Event, EventHandler},
+    event::{Event, EventHandler, Sender},
+    result::RHomeResult,
 };
 
 #[derive(Default)]
@@ -37,5 +38,9 @@ impl Device for ConsoleDevice {
 
     fn set_name(&mut self, name: String) {
         self.name = name
+    }
+
+    fn start(&mut self, _tx: Sender) -> RHomeResult<()> {
+        Ok(())
     }
 }

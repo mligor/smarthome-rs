@@ -1,6 +1,7 @@
 use crate::{
     device::Device,
     event::{Event, EventHandler, Sender},
+    result::RHomeResult,
 };
 use chrono::{Local, Timelike, Utc};
 use std::{collections::HashMap, thread, time::Duration};
@@ -39,7 +40,7 @@ impl Device for TimeDevice {
         Ok(())
     }
 
-    fn start(&mut self, tx: Sender) -> bool {
+    fn start(&mut self, tx: Sender) -> RHomeResult<()> {
         let my_name = self.name();
         let format = self.format.clone();
         let local_time = self.local_time;
@@ -70,7 +71,7 @@ impl Device for TimeDevice {
             _ = tx.send(ev);
         });
 
-        true
+        Ok(())
     }
 }
 

@@ -1,5 +1,3 @@
-use std::sync::{Arc, Mutex};
-
 use crate::{result::RHomeResult, Manager, Ptr};
 use yaml_rust::Yaml;
 
