@@ -2,7 +2,9 @@ use crate::{
     device::DevicePtr,
     driver::{Driver, DriverPtr},
     dummy::DummyDriver,
-    event::{channel, run_event_loop, Event, EventHandler, EventSender, Receiver, Sender},
+    event::{
+        channel, run_event_loop, Event, EventHandler, EventSender, EventTarget, Receiver, Sender,
+    },
     result::{RHomeError, RHomeResult},
     telnet::TelnetDriver,
     time::driver::TimeDriver,
@@ -70,9 +72,23 @@ impl EventHandler for ManagerImpl {
             let mut devices = self.devices.lock().unwrap();
 
             for (dev_name, dev) in devices.iter_mut() {
-                if *dev_name == ev.source {
-                    continue; // ignore own events
+                match ev.target {
+                    EventTarget::Everyone => {
+                        if *dev_name == ev.source {
+                            continue;
+                        }
+                    }
+                    EventTarget::EveryoneIncludeSender => {}
+                    EventTarget::SenderOnly => {
+                        if *dev_name != ev.source {
+                            continue;
+                        }
+                    }
+                    EventTarget::ManagerOnly => {
+                        continue;
+                    }
                 }
+
                 senders.push(dev.tx.clone());
             }
         }

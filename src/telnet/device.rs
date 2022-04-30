@@ -6,7 +6,7 @@ use tokio::{
 
 use crate::{
     device::Device,
-    event::{Event, EventHandler, Sender},
+    event::{Event, EventHandler, EventTarget, Sender},
     result::RHomeResult,
 };
 
@@ -22,7 +22,7 @@ impl TelnetDevice {
 
     fn execute_command(&mut self, command: String) {
         println!(
-            "{}{}{}{}",
+            "console -> {}{}{}{}",
             color::Fg(color::Cyan),
             style::Bold,
             command.clone(),
@@ -33,15 +33,11 @@ impl TelnetDevice {
 
 impl EventHandler for TelnetDevice {
     fn handle_event(&mut self, ev: Event) {
-        println!(
-            "{}{}{}{} : {}{}",
-            color::Fg(color::Cyan),
-            style::Bold,
-            self.name,
-            style::Reset,
-            ev,
-            style::Reset
-        );
+        if ev.name == "console_command" {
+            if let Some(command) = ev.data.get("command") {
+                self.execute_command(command.clone());
+            }
+        }
     }
 }
 
@@ -78,12 +74,12 @@ impl Device for TelnetDevice {
                             Ok(size) => {
                                 let command = String::from_utf8(data[0..size].to_vec()).unwrap();
                                 let command = command.trim().to_string();
-                                _ = tx.send(Event::new(command.clone(), my_name.clone()));
-                                // echo everything!
-                                // self.execute_command(
-                                //     String::from_utf8(data[0..size].to_vec()).unwrap(),
-                                // );
-                                //stream.write(&data[0..size]).await.unwrap();
+                                let mut event =
+                                    Event::new("console_command".to_string(), my_name.clone());
+                                event.data.insert("command", command.clone());
+                                event.target = EventTarget::SenderOnly;
+                                _ = tx.send(event);
+
                                 if command == "exit".to_string() {
                                     break;
                                 }

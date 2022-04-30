@@ -79,7 +79,3 @@ where
         }
     }
 }
-
-// struct Ptr<T> {
-//     value: Arc<Mutex<Box<T>>>,
-// }

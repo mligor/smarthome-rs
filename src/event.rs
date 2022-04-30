@@ -4,14 +4,30 @@ use tokio::sync::broadcast;
 
 use crate::Ptr;
 
-pub type EventData = HashMap<String, String>;
+pub type EventData = HashMap<&'static str, String>;
+
+#[allow(dead_code)]
+#[derive(Clone, Copy, Display, PartialEq)]
+pub enum EventTarget {
+    Everyone,
+    EveryoneIncludeSender,
+    SenderOnly,
+    ManagerOnly,
+}
 
 #[derive(Clone, Display)]
-#[display(fmt = "src={}, event={}, data={:?}", source, name, data)]
+#[display(
+    fmt = "src={}, event={}, trg={}, data={:?}",
+    source,
+    name,
+    target,
+    data
+)]
 pub(crate) struct Event {
     pub name: String,
     pub data: EventData,
     pub source: String,
+    pub target: EventTarget,
 }
 
 pub(crate) type Sender = broadcast::Sender<Event>;
@@ -27,6 +43,7 @@ impl Event {
             name,
             data: EventData::new(),
             source,
+            target: EventTarget::Everyone,
         }
     }
 }

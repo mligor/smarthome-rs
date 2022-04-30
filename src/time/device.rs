@@ -63,7 +63,7 @@ impl Device for TimeDevice {
             }
 
             let mut ev = Event::new("current_time".to_string(), my_name.clone());
-            ev.data = HashMap::from([("time".to_string(), time)]);
+            ev.data = HashMap::from([("time", time)]);
             _ = tx.send(ev);
         });
 
