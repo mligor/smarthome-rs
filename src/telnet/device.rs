@@ -6,7 +6,7 @@ use tokio::{
 
 use crate::{
     device::Device,
-    event::{Event, EventHandler, EventTarget, Sender},
+    event::{Event, EventDataValue, EventHandler, EventTarget, Sender},
     result::RHomeResult,
 };
 
@@ -35,7 +35,9 @@ impl EventHandler for TelnetDevice {
     fn handle_event(&mut self, ev: Event) {
         if ev.name == "console_command" {
             if let Some(command) = ev.data.get("command") {
-                self.execute_command(command.clone());
+                if let EventDataValue::String(command) = command {
+                    self.execute_command(command.clone());
+                }
             }
         }
     }
@@ -76,7 +78,9 @@ impl Device for TelnetDevice {
                                 let command = command.trim().to_string();
                                 let mut event =
                                     Event::new("console_command".to_string(), my_name.clone());
-                                event.data.insert("command", command.clone());
+                                event
+                                    .data
+                                    .insert("command", EventDataValue::String(command.clone()));
                                 event.target = EventTarget::SenderOnly;
                                 _ = tx.send(event);
 

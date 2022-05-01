@@ -25,3 +25,11 @@ drivers:
   telnet:
     name: console_01
     listen_on: 127.0.0.1:7800
+  esphome:
+    connections:
+      - name: bathroom_mirror
+        host: 192.168.178.27:6053
+        password: my_api_password
+      - name: wc
+        host: 192.168.178.26:6053
+        password: my_api_password

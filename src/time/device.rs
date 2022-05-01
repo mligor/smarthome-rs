@@ -1,6 +1,6 @@
 use crate::{
     device::Device,
-    event::{Event, EventHandler, Sender},
+    event::{Event, EventDataValue, EventHandler, Sender},
     result::RHomeResult,
 };
 use chrono::{Local, Timelike, Utc};
@@ -63,7 +63,7 @@ impl Device for TimeDevice {
             }
 
             let mut ev = Event::new("current_time".to_string(), my_name.clone());
-            ev.data = HashMap::from([("time", time)]);
+            ev.data = HashMap::from([("time", EventDataValue::String(time))]);
             _ = tx.send(ev);
         });
 

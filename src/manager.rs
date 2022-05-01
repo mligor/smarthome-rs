@@ -2,6 +2,7 @@ use crate::{
     device::DevicePtr,
     driver::{Driver, DriverPtr},
     dummy::DummyDriver,
+    esphome::EspHomeDriver,
     event::{
         channel, run_event_loop, Event, EventHandler, EventSender, EventTarget, Receiver, Sender,
     },
@@ -194,6 +195,7 @@ fn create_driver(
         "time" => Ok(TimeDriver::new()),
         "dummy" => Ok(DummyDriver::new()),
         "telnet" => Ok(TelnetDriver::new()),
+        "esphome" => Ok(EspHomeDriver::new()),
         _ => Err(RHomeError::new(format!("unknown driver '{}'", name))),
     }?;
     d.load(configuration, manager)?;

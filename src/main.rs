@@ -12,6 +12,7 @@ pub(crate) mod manager;
 pub(crate) mod result;
 
 mod dummy;
+mod esphome;
 mod telnet;
 mod time;
 

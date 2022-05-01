@@ -1,10 +1,27 @@
 use derive_more::Display;
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Debug};
 use tokio::sync::broadcast;
 
 use crate::Ptr;
 
-pub type EventData = HashMap<&'static str, String>;
+pub type EventData = HashMap<&'static str, EventDataValue>;
+
+#[derive(Clone)]
+pub enum EventDataValue {
+    String(String),
+    Bool(bool),
+    Number(f32),
+}
+
+impl Debug for EventDataValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::String(d) => write!(f, "\"{}\"", d),
+            Self::Bool(d) => write!(f, "{}", d),
+            Self::Number(d) => write!(f, "{}", d),
+        }
+    }
+}
 
 #[allow(dead_code)]
 #[derive(Clone, Copy, Display, PartialEq)]
